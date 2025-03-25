@@ -1,16 +1,11 @@
 package org.example.database
 
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 import org.example.models.*
 import java.io.File
 
 object JsonDatabase {
     private val dbFile = File("database.json")
-
-
 
     private val json = Json {
         prettyPrint = true
@@ -63,19 +58,6 @@ object JsonDatabase {
         println("Объявление №$adId успешно изменено.\n")
     }
 
-//    fun editAd(adId: Int, newPrice: List<Double>) {
-//        val adIndex = db.ads.indexOfFirst { it.id == adId }
-//        val ad = db.ads[adIndex]
-//        val updatedAd = ad.copy(price = newPrice[0],
-//            priceHistory = (ad.priceHistory ?: listOf()) + newPrice)
-//
-//        val newAds = db.ads.toMutableList().apply { set(adIndex, updatedAd) }
-//        db = db.copy(ads = newAds)
-//
-//        saveDatabase()
-//        println("Объявление №$adId успешно изменено.\n")
-//    }
-
     fun savePriceHistory(adId: Int, price: List<Double>) {
         val adIndex = db.ads.indexOfFirst { it.id == adId }
         val ad = db.ads[adIndex]
@@ -119,7 +101,6 @@ object JsonDatabase {
     }
 
     fun getAds(): List<Ad> {
-//        return db.ads.filter { it.reasonForCancellation == null }
         return db.ads.filter { it.isActive }
     }
 
