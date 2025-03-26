@@ -99,79 +99,29 @@ fun addVehicle() {
     }
 }
 
-fun searchListingsMenu() {
-    displayVehicleTypeMenu()
-    println("4. Общий поиск")
-    println("5. Вернуться назад")
-
-    when (val userInput = readln().toInt()) {
-        1 -> {
-            displaySearchCriteria(userInput)
-
-            while (true) {
-                when (val userChoice = readln().toInt()) {
+fun saveVehicleTypeSelection(userInput: Int) {
+    while (true) {
+        when (val userChoice = readln().toInt()) {
+            1 -> {
+                findVehiclesByCostAndMileage()
+                break
+            }
+            2 -> {
+                findVehiclesByColor()
+                break
+            }
+            3 -> {
+                when(userInput) {
                     1 -> {
-                        findVehiclesByCostAndMileage()
-                        break
-                    }
-
-                    2 -> {
-                        findVehiclesByColor()
-                        break
-                    }
-
-                    3 -> {
                         displayVehicleType<CarType>()
                         findVehiclesByType<CarType>()
                         break
                     }
-
-                    4 -> break
-                }
-            }
-        }
-
-        2 -> {
-            displaySearchCriteria(userInput)
-
-            while (true) {
-                when (val userChoice = readln().toInt()) {
-                    1 -> {
-                        findVehiclesByCostAndMileage()
-                        break
-                    }
-
                     2 -> {
-                        findVehiclesByColor()
-                        break
-                    }
-
-                    3 -> {
                         displayVehicleType<MotoType>()
                         findVehiclesByType<MotoType>()
                         break
                     }
-
-                    4 -> break
-                }
-            }
-        }
-
-        3 -> {
-            displaySearchCriteria(userInput)
-
-            while (true) {
-                when (val userChoice = readln().toInt()) {
-                    1 -> {
-                        findVehiclesByCostAndMileage()
-                        break
-                    }
-
-                    2 -> {
-                        findVehiclesByColor()
-                        break
-                    }
-
                     3 -> {
                         val userLoadCapacity = readDoubleInput("\nВведите грузоподъемность")
                         val vehicleType =
@@ -184,18 +134,29 @@ fun searchListingsMenu() {
                         }
                         break
                     }
-                    4 -> break
                 }
             }
+            4 -> break
         }
+    }
+}
 
+fun searchListingsMenu() {
+    displayVehicleTypeMenu()
+    println("4. Общий поиск")
+    println("5. Вернуться назад")
+
+    when (val userInput = readln().toInt()) {
+        1, 2, 3 -> {
+            displaySearchCriteria(userInput)
+            saveVehicleTypeSelection(userInput)
+        }
         4 -> {
             val ads = JsonDatabase.getAds()
             for (ad in ads) {
                 displayAd(ad)
             }
         }
-
         5 -> {
             return
         }
