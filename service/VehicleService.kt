@@ -101,13 +101,13 @@ fun addVehicle() {
 
 fun saveVehicleTypeSelection(userInput: Int) {
     while (true) {
-        when (val userChoice = readln().toInt()) {
+        when (readln().toInt()) {
             1 -> {
-                findVehiclesByCostAndMileage()
+                findVehiclesByCostAndMileage(userInput)
                 break
             }
             2 -> {
-                findVehiclesByColor()
+                findVehiclesByColor(userInput)
                 break
             }
             3 -> {
@@ -163,10 +163,10 @@ fun searchListingsMenu() {
     }
 }
 
-fun findVehiclesByCostAndMileage() {
+fun findVehiclesByCostAndMileage(numVehicleType: Int) {
     val userPrice = readDoubleInput("Введите стоимость ТС")
-    val userMileage = readIntInput("Введите пробег")
-    val result = JsonDatabase.searchVehicleByPriceAndMileage(userPrice, userMileage)
+    val userMileage = readIntInput("Введите пробег\n")
+    val result = JsonDatabase.searchVehicleByPriceAndMileage(userPrice, userMileage, numVehicleType)
 
     if (result.isEmpty()) {
         println("Объявлений нет\n")
@@ -178,9 +178,9 @@ fun findVehiclesByCostAndMileage() {
     }
 }
 
-fun findVehiclesByColor() {
-    val userColor = readStringInput("Введите цвет")
-    val vehicleColor = JsonDatabase.searchVehicleByColor(userColor)
+fun findVehiclesByColor(num: Int) {
+    val userColor = readStringInput("Введите цвет\n")
+    val vehicleColor = JsonDatabase.searchVehicleByColor(userColor, num)
 
     if (vehicleColor.isEmpty()) {
         println("Объявлений нет\n")

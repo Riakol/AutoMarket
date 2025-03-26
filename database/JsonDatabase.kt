@@ -122,14 +122,32 @@ object JsonDatabase {
         saveDatabase()
     }
 
-    fun searchVehicleByColor(query: String): List<Ad> {
-        return db.ads.filter {
-            it.vin in db.vehicles.filter { it.color.contains(query, ignoreCase = true) }.map { it.vin }
+    fun searchVehicleByColor(query: String, numVehicleType: Int): List<Ad> {
+        return db.ads.filter { ad ->
+            db.vehicles.any { vehicle ->
+                vehicle.vin == ad.vin &&
+                vehicle.color.contains(query, ignoreCase = true) &&
+                when (numVehicleType) {
+                    1 -> vehicle is Car
+                    2 -> vehicle is Motorcycle
+                    else -> vehicle is СommercialTransport
+                }
+            }
         }
     }
 
-    fun searchVehicleByPriceAndMileage(price: Double, mileage: Int): List<Ad> {
-        return db.ads.filter { ad -> ad.price == price && ad.vin in db.vehicles.filter { it.mileage == mileage }.map { it.vin } }
+    fun searchVehicleByPriceAndMileage(price: Double, mileage: Int, numVehicleType: Int): List<Ad> {
+        return db.ads.filter { ad ->
+            ad.price == price && db.vehicles.any { vehicle ->
+                vehicle.vin == ad.vin &&
+                vehicle.mileage == mileage &&
+                when(numVehicleType) {
+                    1 -> vehicle is Car
+                    2 -> vehicle is Motorcycle
+                    else -> vehicle is СommercialTransport
+                }
+            }
+        }
     }
 
     fun searchVehicleByType(tvType: String): List<Ad> {
