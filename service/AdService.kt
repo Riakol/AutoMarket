@@ -3,7 +3,6 @@ package org.example.service
 import org.example.consoleutils.readDoubleInput
 import org.example.database.JsonDatabase
 import org.example.database.JsonDatabase.db
-import org.example.displayVehicleDetails
 import org.example.models.*
 import java.time.LocalDate
 

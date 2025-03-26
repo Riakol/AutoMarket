@@ -253,15 +253,13 @@ inline fun <reified T : Enum<T>> findVehiclesByType() {
     }
 }
 
-inline fun <reified T : Enum<T>> displayVehicleType(): EnumEntries<T> {
+inline fun <reified T : Enum<T>> displayVehicleType() {
     val vehicleTypes = enumEntries<T>()
 
     println("Выберите тип транспорта по номеру:")
     vehicleTypes.forEachIndexed { index, type ->
         println("${index + 1}. $type")
     }
-
-    return vehicleTypes
 }
 
 

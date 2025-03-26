@@ -64,7 +64,7 @@ object JsonDatabase {
         db = db.copy(ads = newAds)
 
         saveDatabase()
-        println("Объявление №$adId успешно изменено. Новая цена: $newPrice")
+        println("Объявление №$adId успешно изменено. Новая цена: ${newPrice.toInt()}")
     }
 
     fun archiveAd(adId: Int, cancellationReason: String, isActive: Boolean) {
