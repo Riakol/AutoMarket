@@ -43,29 +43,28 @@ object JsonDatabase {
         val newAds = db.ads.toMutableList().apply { add(ad) }
         db = db.copy(ads = newAds)
         saveDatabase()
-        println("Объявление успешно добавлено.\n")
+        println("\nОбъявление успешно добавлено.\n")
     }
 
     fun editAd(adId: Int, newPrice: Double) {
         val adIndex = db.ads.indexOfFirst { it.id == adId }
+        if (adIndex == -1) {
+            println("Объявление с ID $adId не найдено.")
+            return
+        }
+
         val ad = db.ads[adIndex]
-        val updatedAd = ad.copy(price = newPrice)
+
+        val updatedAd = ad.copy(
+            price = newPrice,
+            priceHistory = (ad.priceHistory ?: emptyList()) + newPrice
+        )
 
         val newAds = db.ads.toMutableList().apply { set(adIndex, updatedAd) }
         db = db.copy(ads = newAds)
 
         saveDatabase()
-        println("Объявление №$adId успешно изменено.\n")
-    }
-
-    fun savePriceHistory(adId: Int, price: List<Double>) {
-        val adIndex = db.ads.indexOfFirst { it.id == adId }
-        val ad = db.ads[adIndex]
-        val updatedAd = ad.copy(priceHistory = ad.priceHistory?.plus(price))
-        val newAds = db.ads.toMutableList().apply { set(adIndex, updatedAd) }
-        db = db.copy(ads = newAds)
-
-        saveDatabase()
+        println("Объявление №$adId успешно изменено. Новая цена: $newPrice")
     }
 
     fun archiveAd(adId: Int, cancellationReason: String, isActive: Boolean) {
@@ -85,7 +84,7 @@ object JsonDatabase {
         db = db.copy(ads = newAds)
 
         saveDatabase()
-        println("Объявление с id $adId успешно архивировано.")
+        println("Объявление с id $adId успешно архивировано.\n")
     }
 
     fun searchOwnerById(id: Int): Owner {
