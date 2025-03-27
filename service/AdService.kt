@@ -155,7 +155,7 @@ fun displayAd(ad: Ad) {
         ?.joinToString(", ") { it.toInt().toString() }
         ?: ""
 
-    println("Объявление №${ad.id} от ${ad.date}")
+    println("\nОбъявление №${ad.id} от ${ad.date}")
     when (vinTv) {
         is Car -> println("Продажа автомобиля:")
         is Motorcycle -> println("Продажа мотоцикла:")

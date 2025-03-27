@@ -165,7 +165,7 @@ fun searchListingsMenu() {
 
 fun findVehiclesByCostAndMileage(numVehicleType: Int) {
     val userPrice = readDoubleInput("Введите стоимость ТС")
-    val userMileage = readIntInput("Введите пробег\n")
+    val userMileage = readIntInput("Введите пробег")
     val result = JsonDatabase.searchVehicleByPriceAndMileage(userPrice, userMileage, numVehicleType)
 
     if (result.isEmpty()) {
