@@ -39,7 +39,12 @@ fun addAd() {
         println("Выберите ТС по номеру:")
 
         for ((index, vehicle) in ownerTvs.withIndex()) {
-            print("${index + 1}.\n * ${vehicle.make} ${vehicle.model}\n * Year: ${vehicle.year}\n * Color: ${vehicle.color}\n * Mileage: ${vehicle.mileage}\n")
+            print("${index + 1}. ")
+            displaySellVehicleType(vehicle)
+            println("* ${vehicle.make} ${vehicle.model}")
+            println("* Year: ${vehicle.year}")
+            println("* Color: ${vehicle.color}")
+            println("* Mileage: ${vehicle.mileage}")
             displayVehicleDetails(vehicle)
         }
 
@@ -149,11 +154,12 @@ fun displayAd(ad: Ad) {
         ?: ""
 
     println("\nОбъявление №${ad.id} от ${ad.date}")
-    when (vinTv) {
-        is Car -> println("Продажа автомобиля:")
-        is Motorcycle -> println("Продажа мотоцикла:")
-        is СommercialTransport -> println("Продажа коммерческого транспорта:")
-    }
+//    when (vinTv) {
+//        is Car -> println("Продажа автомобиля:")
+//        is Motorcycle -> println("Продажа мотоцикла:")
+//        is СommercialTransport -> println("Продажа коммерческого транспорта:")
+//    }
+    displaySellVehicleType(vinTv)
     println("Seller: ${ownerName.name}, ${ownerName.phone}")
     println(" * ${vinTv.make} ${vinTv.model}")
     println(" * Year: ${vinTv.year}")

@@ -226,8 +226,16 @@ inline fun <reified T : Enum<T>> displayVehicleType() {
 
 fun displayVehicleDetails(vehicle: Vehicle) {
     when (vehicle) {
-        is Car -> println(" * Car Type: ${vehicle.carType}\n")
-        is Motorcycle -> println(" * Motorcycle Type: ${vehicle.motoType}\n")
-        is СommercialTransport -> println(" * Load Capacity: ${vehicle.loadCapacity.toInt()}\n")
+        is Car -> println("* Car Type: ${vehicle.carType}\n")
+        is Motorcycle -> println("* Motorcycle Type: ${vehicle.motoType}\n")
+        is СommercialTransport -> println("* Load Capacity: ${vehicle.loadCapacity.toInt()}\n")
+    }
+}
+
+fun displaySellVehicleType(vehicle: Vehicle){
+    when(vehicle) {
+        is Car -> println("Продажа автомобиля:")
+        is Motorcycle -> println("Продажа мотоцикла:")
+        is СommercialTransport -> println("Продажа коммерческого транспорта:")
     }
 }
