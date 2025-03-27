@@ -55,14 +55,7 @@ fun addAd() {
     }
 
     while (true) {
-        println("Введите цену: ")
-        val userPriceInput = readlnOrNull()?.toDoubleOrNull()
-
-        if (userPriceInput == null) {
-            println("Некорректный ввод. Пожалуйста, введите число.")
-            continue
-        }
-
+        val userPriceInput = readDoubleInput("Введите цену")
         ownerPrice = userPriceInput
         break
     }
