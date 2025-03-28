@@ -151,20 +151,15 @@ fun displayAd(ad: Ad) {
         ?.joinToString(", ") { it.toInt().toString() }
         ?: ""
 
-    println("\nОбъявление №${ad.id} от ${ad.date}")
-//    when (vinTv) {
-//        is Car -> println("Продажа автомобиля:")
-//        is Motorcycle -> println("Продажа мотоцикла:")
-//        is СommercialTransport -> println("Продажа коммерческого транспорта:")
-//    }
+    println("Объявление №${ad.id} от ${ad.date}")
     displaySellVehicleType(vinTv)
     println("Seller: ${ownerName.name}, ${ownerName.phone}")
-    println(" * ${vinTv.make} ${vinTv.model}")
-    println(" * Year: ${vinTv.year}")
-    println(" * Price: ${ad.price.toInt()}")
-    if (priceHistoryString.isNotEmpty()) println(" * Price change history: $priceHistoryString")
-    println(" * Color: ${vinTv.color}")
-    println(" * Mileage: ${vinTv.mileage}")
+    println("* ${vinTv.make} ${vinTv.model}")
+    println("* Year: ${vinTv.year}")
+    println("* Price: ${ad.price.toInt()}")
+    if (priceHistoryString.isNotEmpty()) println("* Price change history: $priceHistoryString")
+    println("* Color: ${vinTv.color}")
+    println("* Mileage: ${vinTv.mileage}")
     displayVehicleDetails(vinTv)
 }
 
