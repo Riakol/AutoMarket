@@ -9,7 +9,7 @@ import java.time.LocalDate
 fun addAd() {
     val getOwners = JsonDatabase.getOwners()
     val ownerTvs = JsonDatabase.getVehiclesWithoutAds()
-    var ownerDetails: Owner = Owner(0, "", "", "")
+    var ownerInfo: Owner = Owner(0, "", "", "")
     var ownerVin: String = ""
     var ownerPrice: Double = 0.0
 
@@ -17,23 +17,21 @@ fun addAd() {
         println("Выберите владельца по id:\n")
 
         for (owner in getOwners) println("${owner.id}. ${owner.name}")
-        val ownerInput = readln()
+        val ownerInput = readln().toIntOrNull()
 
-        val selectedOwner = getOwners.find { it.id == ownerInput.toInt() }
+        val selectedOwner = getOwners.find { ownerInput != null && it.id == ownerInput }
         if (selectedOwner == null) {
             println("Владелец с id $ownerInput не найден. Попробуйте снова.\n")
             continue
         }
-        ownerDetails = selectedOwner
+        ownerInfo = selectedOwner
         break
     }
 
-
     if (ownerTvs.isEmpty()) {
-        println("Для владельца ${ownerDetails.name} нет транспортных средств без объявления.\n")
+        println("Для владельца ${ownerInfo.name} нет транспортных средств без объявления.\n")
         return
     }
-
 
     while (true) {
         println("Выберите ТС по номеру:")
@@ -70,7 +68,7 @@ fun addAd() {
     JsonDatabase.addAd(
         Ad(
             JsonDatabase.getMaxIndexAd(),
-            ownerId = ownerDetails.id,
+            ownerId = ownerInfo.id,
             vin = ownerVin,
             price = ownerPrice,
             date = currentDate,
