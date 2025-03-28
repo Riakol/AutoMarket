@@ -8,7 +8,7 @@ import java.time.LocalDate
 
 fun addAd() {
     val getOwners = JsonDatabase.getOwners()
-    val ownerTvs = JsonDatabase.getVehiclesWithoutAds()
+    val showVehicles = JsonDatabase.getVehiclesWithoutAds()
     var ownerInfo: Owner = Owner(0, "", "", "")
     var ownerVin: String = ""
     var ownerPrice: Double = 0.0
@@ -28,7 +28,7 @@ fun addAd() {
         break
     }
 
-    if (ownerTvs.isEmpty()) {
+    if (showVehicles.isEmpty()) {
         println("Для владельца ${ownerInfo.name} нет транспортных средств без объявления.\n")
         return
     }
@@ -36,7 +36,7 @@ fun addAd() {
     while (true) {
         println("Выберите ТС по номеру:")
 
-        for ((index, vehicle) in ownerTvs.withIndex()) {
+        for ((index, vehicle) in showVehicles.withIndex()) {
             print("${index + 1}. ")
             displaySellVehicleType(vehicle)
             println("* ${vehicle.make} ${vehicle.model}")
@@ -47,12 +47,12 @@ fun addAd() {
         }
 
         val userInput = readln().toIntOrNull()
-        if (userInput !in 1..ownerTvs.size) {
-            println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${ownerTvs.size}.")
+        if (userInput !in 1..showVehicles.size) {
+            println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${showVehicles.size}.")
             continue
         }
         if (userInput != null) {
-            ownerVin = ownerTvs[userInput - 1].vin
+            ownerVin = showVehicles[userInput - 1].vin
         }
         break
     }
