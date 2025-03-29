@@ -146,7 +146,15 @@ fun searchListingsMenu() {
     println("4. Общий поиск")
     println("5. Вернуться назад")
 
-    when (val userInput = readln().toInt()) {
+    var userInput: Int? = null
+    do {
+        userInput = readln().toIntOrNull() ?: continue
+        if (userInput !in 1..5) {
+            println("Некорректный выбор. Пожалуйста, выберите число от 1 до 5.")
+        }
+    } while (userInput !in 1..5)
+
+    when (userInput) {
         1, 2, 3 -> {
             displaySearchCriteria(userInput)
             saveVehicleTypeSelection(userInput)
