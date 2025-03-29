@@ -122,11 +122,11 @@ object JsonDatabase {
         saveDatabase()
     }
 
-    fun searchVehicleByColor(query: String, numVehicleType: Int): List<Ad> {
+    fun searchVehicleByColor(color: String, numVehicleType: Int): List<Ad> {
         return db.ads.filter { ad ->
             db.vehicles.any { vehicle ->
                 vehicle.vin == ad.vin &&
-                vehicle.color.contains(query, ignoreCase = true) &&
+                vehicle.color.contains(color, ignoreCase = true) &&
                 when (numVehicleType) {
                     1 -> vehicle is Car
                     2 -> vehicle is Motorcycle
