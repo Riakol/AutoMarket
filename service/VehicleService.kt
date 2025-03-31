@@ -242,8 +242,8 @@ fun displayVehicleDetails(vehicle: Vehicle) {
 
 fun displaySellVehicleType(vehicle: Vehicle){
     when(vehicle) {
-        is Car -> println("Продажа автомобиля:")
-        is Motorcycle -> println("Продажа мотоцикла:")
-        is СommercialTransport -> println("Продажа коммерческого транспорта:")
+        is Vehicle.Car -> println("Продажа автомобиля:")
+        is Vehicle.Motorcycle -> println("Продажа мотоцикла:")
+        is Vehicle.CommercialTransport -> println("Продажа коммерческого транспорта:")
     }
 }
