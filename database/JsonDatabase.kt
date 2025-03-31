@@ -1,13 +1,25 @@
 package org.example.database
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.example.models.*
 import java.io.File
 
 object JsonDatabase {
     private val dbFile = File("database.json")
 
+    private val vehicleSerializersModule = SerializersModule {
+        polymorphic(Vehicle::class) {
+            subclass(Vehicle.Motorcycle::class)
+            subclass(Vehicle.Car::class)
+            subclass(Vehicle.CommercialTransport::class)
+        }
+    }
+
     private val json = Json {
+        serializersModule = vehicleSerializersModule
         prettyPrint = true
         classDiscriminator = "type"
         ignoreUnknownKeys = true
@@ -128,9 +140,9 @@ object JsonDatabase {
                 vehicle.vin == ad.vin &&
                 vehicle.color.contains(color, ignoreCase = true) &&
                 when (numVehicleType) {
-                    1 -> vehicle is Car
-                    2 -> vehicle is Motorcycle
-                    else -> vehicle is СommercialTransport
+                    1 -> vehicle is Vehicle.Car
+                    2 -> vehicle is Vehicle.Motorcycle
+                    else -> vehicle is Vehicle.CommercialTransport
                 }
             }
         }
@@ -142,9 +154,9 @@ object JsonDatabase {
                 vehicle.vin == ad.vin &&
                 vehicle.mileage == mileage &&
                 when(numVehicleType) {
-                    1 -> vehicle is Car
-                    2 -> vehicle is Motorcycle
-                    else -> vehicle is СommercialTransport
+                    1 -> vehicle is Vehicle.Car
+                    2 -> vehicle is Vehicle.Motorcycle
+                    else -> vehicle is Vehicle.CommercialTransport
                 }
             }
         }
@@ -154,8 +166,8 @@ object JsonDatabase {
         return db.ads.filter { ad ->
             db.vehicles.find { tv -> tv.vin == ad.vin }?.let { vehicle ->
                 when (vehicle) {
-                    is Car -> vehicle.carType.name == tvType
-                    is Motorcycle -> vehicle.motoType.name == tvType
+                    is Vehicle.Car -> vehicle.carType.name == tvType
+                    is Vehicle.Motorcycle -> vehicle.motoType.name == tvType
                     else -> false
                 }
             } ?: false
@@ -166,7 +178,7 @@ object JsonDatabase {
         return db.ads.filter { ad ->
             db.vehicles.find { tv -> tv.vin == ad.vin }?.let { vehicle ->
                 when (vehicle) {
-                    is СommercialTransport -> vehicle.loadCapacity == tvCapacity
+                    is Vehicle.CommercialTransport -> vehicle.loadCapacity == tvCapacity
                     else -> false
                 }
             } ?: false

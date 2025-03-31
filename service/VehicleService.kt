@@ -7,7 +7,6 @@ import org.example.database.JsonDatabase
 import org.example.models.*
 import org.example.ui.displaySearchCriteria
 import org.example.ui.displayVehicleTypeMenu
-import kotlin.enums.EnumEntries
 import kotlin.enums.enumEntries
 
 fun addVehicle() {
@@ -39,7 +38,7 @@ fun addVehicle() {
                         continue
                     }
                     JsonDatabase.addVehicle(
-                        Car(
+                        Vehicle.Car(
                             vin = vin,
                             make = make,
                             model = model,
@@ -63,7 +62,7 @@ fun addVehicle() {
                         continue
                     }
                     JsonDatabase.addVehicle(
-                        Motorcycle(
+                        Vehicle.Motorcycle(
                             vin = vin,
                             make = make,
                             model = model,
