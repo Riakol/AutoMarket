@@ -81,7 +81,7 @@ fun addVehicle() {
                 while (true) {
                     val loadCapacity = readIntInput("Введите грузоподъемность")
                     JsonDatabase.addVehicle(
-                        СommercialTransport(
+                        Vehicle.CommercialTransport(
                             vin = vin,
                             make = make,
                             model = model,
