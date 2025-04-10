@@ -4,6 +4,8 @@ import org.example.consoleutils.readDoubleInput
 import org.example.consoleutils.readIntInput
 import org.example.consoleutils.readStringInput
 import org.example.database.JsonDatabase
+import org.example.database.JsonDatabase.db
+import org.example.database.JsonDatabase.saveDatabase
 import org.example.models.*
 import org.example.ui.displaySearchCriteria
 import org.example.ui.displayVehicleTypeMenu
@@ -37,7 +39,7 @@ fun addVehicle() {
                         println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${CarType.entries.size}.")
                         continue
                     }
-                    JsonDatabase.addVehicle(
+                    addVehicle(
                         Vehicle.Car(
                             vin = vin,
                             make = make,
@@ -61,7 +63,7 @@ fun addVehicle() {
                         println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${MotoType.entries.size}.")
                         continue
                     }
-                    JsonDatabase.addVehicle(
+                    addVehicle(
                         Vehicle.Motorcycle(
                             vin = vin,
                             make = make,
@@ -79,7 +81,7 @@ fun addVehicle() {
             3 -> {
                 while (true) {
                     val loadCapacity = readIntInput("Введите грузоподъемность")
-                    JsonDatabase.addVehicle(
+                    addVehicle(
                         Vehicle.CommercialTransport(
                             vin = vin,
                             make = make,
@@ -124,7 +126,7 @@ fun saveVehicleTypeSelection(userInput: Int) {
                     3 -> {
                         val userLoadCapacity = readDoubleInput("\nВведите грузоподъемность")
                         val vehicleType =
-                            JsonDatabase.searchVehicleByCapacity(userLoadCapacity)
+                            searchVehicleByCapacity(userLoadCapacity)
 
                         if (vehicleType.isEmpty()) println("Объявлений нет")
 
@@ -173,7 +175,7 @@ fun searchListingsMenu() {
 fun findVehiclesByCostAndMileage(numVehicleType: Int) {
     val userPrice = readDoubleInput("Введите стоимость ТС")
     val userMileage = readIntInput("Введите пробег")
-    val result = JsonDatabase.searchVehicleByPriceAndMileage(userPrice, userMileage, numVehicleType)
+    val result = searchVehicleByPriceAndMileage(userPrice, userMileage, numVehicleType)
 
     if (result.isEmpty()) {
         println("Объявлений нет\n")
@@ -187,7 +189,7 @@ fun findVehiclesByCostAndMileage(numVehicleType: Int) {
 
 fun findVehiclesByColor(num: Int) {
     val userColor = readStringInput("Введите цвет\n")
-    val vehicleColor = JsonDatabase.searchVehicleByColor(userColor, num)
+    val vehicleColor = searchVehicleByColor(userColor, num)
 
     if (vehicleColor.isEmpty()) {
         println("Объявлений нет\n")
@@ -209,7 +211,7 @@ inline fun <reified T : Enum<T>> findVehiclesByType() {
             continue
         }
 
-        val vehicleType = JsonDatabase.searchVehicleByType(vehicleTypes[userVehicleType - 1].name)
+        val vehicleType = searchVehicleByType(vehicleTypes[userVehicleType - 1].name)
 
         if (vehicleType.isEmpty()) {
             println("Объявлений нет")
@@ -244,5 +246,75 @@ fun displaySellVehicleType(vehicle: Vehicle){
         is Vehicle.Car -> println("Продажа автомобиля:")
         is Vehicle.Motorcycle -> println("Продажа мотоцикла:")
         is Vehicle.CommercialTransport -> println("Продажа коммерческого транспорта:")
+    }
+}
+
+fun searchOwnerById(id: Int): Owner {
+    return db.owners.filter { it.id == id}[0]
+}
+
+fun searchByVin(vin: String): Vehicle {
+    return db.vehicles.filter {it.vin == vin}[0]
+}
+
+fun addVehicle(vehicle: Vehicle) {
+    if (db.vehicles.any { it.vin == vehicle.vin }) {
+        println("Транспортное средство с vin ${vehicle.vin} уже существует!")
+        return
+    }
+
+    val newVehicles = db.vehicles.toMutableList().apply { add(vehicle) }
+    db = db.copy(vehicles = newVehicles)
+    saveDatabase()
+}
+
+fun searchVehicleByColor(color: String, numVehicleType: Int): List<Ad> {
+    return db.ads.filter { ad ->
+        db.vehicles.any { vehicle ->
+            vehicle.vin == ad.vin &&
+                    vehicle.color.contains(color, ignoreCase = true) &&
+                    when (numVehicleType) {
+                        1 -> vehicle is Vehicle.Car
+                        2 -> vehicle is Vehicle.Motorcycle
+                        else -> vehicle is Vehicle.CommercialTransport
+                    }
+        }
+    }
+}
+
+fun searchVehicleByPriceAndMileage(price: Double, mileage: Int, numVehicleType: Int): List<Ad> {
+    return db.ads.filter { ad ->
+        ad.price == price && db.vehicles.any { vehicle ->
+            vehicle.vin == ad.vin &&
+                    vehicle.mileage == mileage &&
+                    when(numVehicleType) {
+                        1 -> vehicle is Vehicle.Car
+                        2 -> vehicle is Vehicle.Motorcycle
+                        else -> vehicle is Vehicle.CommercialTransport
+                    }
+        }
+    }
+}
+
+fun searchVehicleByType(tvType: String): List<Ad> {
+    return db.ads.filter { ad ->
+        db.vehicles.find { tv -> tv.vin == ad.vin }?.let { vehicle ->
+            when (vehicle) {
+                is Vehicle.Car -> vehicle.carType.name == tvType
+                is Vehicle.Motorcycle -> vehicle.motoType.name == tvType
+                else -> false
+            }
+        } ?: false
+    }
+}
+
+fun searchVehicleByCapacity(tvCapacity: Double): List<Ad> {
+    return db.ads.filter { ad ->
+        db.vehicles.find { tv -> tv.vin == ad.vin }?.let { vehicle ->
+            when (vehicle) {
+                is Vehicle.CommercialTransport -> vehicle.loadCapacity == tvCapacity
+                else -> false
+            }
+        } ?: false
     }
 }

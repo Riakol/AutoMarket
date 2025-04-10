@@ -3,6 +3,7 @@ package org.example.service
 import org.example.consoleutils.readDoubleInput
 import org.example.database.JsonDatabase
 import org.example.database.JsonDatabase.db
+import org.example.database.JsonDatabase.saveDatabase
 import org.example.models.*
 import java.time.LocalDate
 
@@ -65,9 +66,9 @@ fun addAd() {
 
     val currentDate = LocalDate.now().toString()
 
-    JsonDatabase.addAd(
+    addAd(
         Ad(
-            JsonDatabase.getMaxIndexAd(),
+            JsonDatabase.getNextIdAd(),
             ownerId = ownerInfo.id,
             vin = ownerVin,
             price = ownerPrice,
@@ -103,7 +104,7 @@ fun removeAd() {
             else -> {
                 println("Укажите причину снятия объявления:")
                 val reason = readln()
-                JsonDatabase.archiveAd(userInput.toInt(), reason, false)
+                archiveAd(userInput.toInt(), reason, false)
                 return
             }
         }
@@ -135,7 +136,7 @@ fun editAd() {
             else -> {
                 val newPrice = readDoubleInput("Укажите новую цену")
 
-                JsonDatabase.editAd(userInput.toInt(), newPrice)
+                editAd(userInput.toInt(), newPrice)
                 return
             }
         }
@@ -143,8 +144,8 @@ fun editAd() {
 }
 
 fun displayAd(ad: Ad) {
-    val vinTv = JsonDatabase.searchByVin(ad.vin)
-    val ownerName = JsonDatabase.searchOwnerById(ad.ownerId)
+    val vinTv = searchByVin(ad.vin)
+    val ownerName = searchOwnerById(ad.ownerId)
     val priceHistoryString = ad.priceHistory
         ?.takeIf { it.size > 1 }
         ?.dropLast(1)
@@ -163,3 +164,55 @@ fun displayAd(ad: Ad) {
     displayVehicleDetails(vinTv)
 }
 
+fun addAd(ad: Ad) {
+    if (db.ads.any { it.id == ad.id }) {
+        println("Объявление с id ${ad.id} уже существует!")
+        return
+    }
+
+    val newAds = db.ads.toMutableList().apply { add(ad) }
+    db = db.copy(ads = newAds)
+    saveDatabase()
+    println("\nОбъявление успешно добавлено.\n")
+}
+
+fun editAd(adId: Int, newPrice: Double) {
+    val adIndex = db.ads.indexOfFirst { it.id == adId }
+    if (adIndex == -1) {
+        println("Объявление с ID $adId не найдено.")
+        return
+    }
+
+    val ad = db.ads[adIndex]
+
+    val updatedAd = ad.copy(
+        price = newPrice,
+        priceHistory = (ad.priceHistory ?: emptyList()) + newPrice
+    )
+
+    val newAds = db.ads.toMutableList().apply { set(adIndex, updatedAd) }
+    db = db.copy(ads = newAds)
+
+    saveDatabase()
+    println("Объявление №$adId успешно изменено. Новая цена: ${newPrice.toInt()}\n")
+}
+
+fun archiveAd(adId: Int, cancellationReason: String, isActive: Boolean) {
+    val adIndex = db.ads.indexOfFirst { it.id == adId }
+    if (adIndex == -1) {
+        println("Объявление с id $adId не существует!")
+        return
+    }
+
+    val ad = db.ads[adIndex]
+    val updatedAd = ad.copy(
+        reasonForCancellation = cancellationReason,
+        isActive = isActive
+    )
+
+    val newAds = db.ads.toMutableList().apply { set(adIndex, updatedAd) }
+    db = db.copy(ads = newAds)
+
+    saveDatabase()
+    println("Объявление с id $adId успешно архивировано.\n")
+}
