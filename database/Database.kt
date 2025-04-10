@@ -1,6 +1,9 @@
-package org.example.models
+package org.example.database
 
 import kotlinx.serialization.Serializable
+import org.example.models.Ad
+import org.example.models.Owner
+import org.example.models.Vehicle
 
 @Serializable
 data class Database(
