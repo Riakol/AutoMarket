@@ -1,64 +1,31 @@
 {
-    "ownerEntities": [
+    "vehicles": [
+        {
+            "type": "Car",
+            "vin": "QWERT123",
+            "make": "Honda",
+            "model": "CRV",
+            "year": 2002,
+            "color": "white",
+            "mileage": 250000,
+            "carType": "ESTATE"
+        }
+    ],
+    "owners": [
         {
             "id": 1,
-            "name": "Beric",
-            "phone": "+7778435435",
-            "email": "beka@mail.ru"
-        },
-        {
-            "id": 2,
             "name": "Andrew",
-            "phone": "+9843543534",
+            "phone": "+9769546456",
             "email": "andrewjew@gmail.com"
         }
     ],
-    "adEntities": [
+    "ads": [
         {
             "id": 1,
             "ownerId": 1,
-            "vin": "QWEASD1",
-            "price": 27000000,
-            "date": "2025-04-22"
-        },
-        {
-            "id": 2,
-            "ownerId": 1,
-            "vin": "QPOSDF2",
-            "price": 6000000,
-            "date": "2025-04-22"
-        }
-    ],
-    "vehicleEntities": [
-        {
-            "type": "Car",
-            "vin": "QWEASD1",
-            "brand": "Kia",
-            "model": "k10",
-            "year": 2025,
-            "color": "black",
-            "mileage": 1,
-            "carType": "Sedan"
-        },
-        {
-            "type": "Motorcycle",
-            "vin": "QPOSDF2",
-            "brand": "Suzuki",
-            "model": "666",
-            "year": 2021,
-            "color": "black",
-            "mileage": 100000,
-            "motoType": "Sport"
-        },
-        {
-            "type": "CommercialVehicle",
-            "vin": "ZXCBN3",
-            "brand": "Toyota",
-            "model": "Tacoma",
-            "year": 2017,
-            "color": "gray",
-            "mileage": 122000,
-            "capacity": 3500000
+            "vin": "QWERT123",
+            "price": 6000000.0,
+            "date": "2025-04-23"
         }
     ]
 }

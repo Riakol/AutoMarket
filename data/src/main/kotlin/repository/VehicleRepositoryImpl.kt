@@ -2,8 +2,12 @@ package com.automarket.data.repository
 
 import JsonDatabase
 import JsonDatabase.db
-import entity.*
+import entity.AdEntity
+import entity.MotoType
+import entity.OwnerEntity
+import entity.VehicleEntity
 import models.Ad
+import models.CarType
 import models.Owner
 import models.Vehicle
 import org.example.consoleutils.readDoubleInput
@@ -75,7 +79,7 @@ class VehicleRepositoryImpl : VehicleRepository {
 
         val currentDate = LocalDate.now().toString()
 
-        service.addAd(
+        service.postAd(
             AdEntity(
                 JsonDatabase.getNextIdAd(),
                 ownerId = ownerInfo.id,
@@ -188,6 +192,38 @@ class VehicleRepositoryImpl : VehicleRepository {
                         println("\nКоммерческий транспорт успешно добавлен.\n")
                         return
                     }
+                }
+            }
+        }
+    }
+
+    override fun editAd() {
+        val ads = getAds()
+
+        if (ads.isEmpty()) {
+            println("Нет объявлений.")
+            return
+        }
+
+        println("Выберите номер объявления:\n")
+
+        for (ad in ads) {
+            displayAd(mapAdToData(ad))
+        }
+
+        val userInput = readln()
+
+        while (true) {
+            when {
+                db.ads.none { it.id == userInput.toInt() && it.isActive } -> {
+                    println("Объявления с id $userInput не существует. Пожалуйста, выберите корректный id")
+                    if (userInput.all { it.isDigit() }) continue else break
+                }
+                else -> {
+                    val newPrice = readDoubleInput("Укажите новую цену")
+
+                    service.configAd(userInput.toInt(), newPrice)
+                    return
                 }
             }
         }

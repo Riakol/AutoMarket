@@ -10,6 +10,7 @@ interface VehicleRepository {
     fun addVehicle()
     fun removeAds()
     fun searchAds()
+    fun editAd()
     fun findByCapacity(tvCapacity: Int) : List<Ad>
     fun findByType(vehicleType: String): List<Ad>
     fun findVehicleByColor(color: String, typeVehicle: Int): List<Ad>

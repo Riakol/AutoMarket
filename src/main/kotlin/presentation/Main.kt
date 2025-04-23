@@ -1,9 +1,13 @@
-package org.example.presentation
+package presentation
 
-import org.example.service.*
+import com.automarket.data.repository.VehicleRepositoryImpl
+import repository.VehicleRepository
+import usecase.*
 import utils.displayMenu
 
 fun main() {
+
+    val vehicleRepository: VehicleRepository = VehicleRepositoryImpl()
 
     while (true) {
         displayMenu()
@@ -16,12 +20,18 @@ fun main() {
 
         while (true) {
             when (choiceMain) {
-                1 -> { addOwner(); break }
-                2 -> { addVehicle(); break }
-                3 -> { addAd(); break }
-                4 -> { removeAd(); break }
-                5 -> { editAd(); break }
-                6 -> { searchListingsMenu(); break }
+                1 -> {
+                    AddOwnerUseCase(vehicleRepository).execute(); break }
+                2 -> {
+                    AddVehicleUseCase(vehicleRepository).execute(); break }
+                3 -> {
+                    AddAdUseCase(vehicleRepository).execute(); break }
+                4 -> {
+                    RemoveAdsUseCase(vehicleRepository).execute(); break }
+                5 -> {
+                    EditAdUseCase(vehicleRepository).execute(); break }
+                6 -> {
+                    SearchAdsUseCase(vehicleRepository).execute(); break }
             }
         }
     }

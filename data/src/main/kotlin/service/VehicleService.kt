@@ -14,9 +14,3 @@ fun addVehicle(vehicle: VehicleEntity) {
     db = db.copy(vehicles = newVehicles)
     saveDatabase()
 }
-
-//fun saveVehicle(vehicleEntity: VehicleEntity) {
-//    val newVehicle = db.vehicles.toMutableList() .apply { add(vehicleEntity) }
-//    db = db.copy(vehicles = newVehicle)
-//    saveDatabase()
-//}

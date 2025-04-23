@@ -4,7 +4,7 @@ import JsonDatabase.db
 import JsonDatabase.saveDatabase
 import entity.AdEntity
 
-fun addAd(ad: AdEntity) {
+fun postAd(ad: AdEntity) {
     if (db.ads.any { it.id == ad.id }) {
         println("Объявление с id ${ad.id} уже существует!")
         return
@@ -36,34 +36,23 @@ fun archiveAd(adId: Int, cancellationReason: String, isActive: Boolean) {
     println("Объявление с id $adId успешно удалено.\n")
 }
 
-fun postAd(adEntity: AdEntity) {
-    if (db.ads.any { it.id == adEntity.id }) {
-        println("Объявление с id ${adEntity.id} уже существует!")
-        return
-    }
-
-    val newAds = db.ads.toMutableList().apply { add(adEntity) }
-    db = db.copy(ads = newAds)
-    saveDatabase()
-    println("\nОбъявление успешно добавлено.\n")
-}
-
-private fun removeAd(adId: Int, cancellationReason: String, isActive: Boolean) {
+fun configAd(adId: Int, newPrice: Double) {
     val adIndex = db.ads.indexOfFirst { it.id == adId }
     if (adIndex == -1) {
-        println("Объявление с id $adId не существует!")
+        println("Объявление с ID $adId не найдено.")
         return
     }
 
     val ad = db.ads[adIndex]
+
     val updatedAd = ad.copy(
-        reasonForCancellation = cancellationReason,
-        isActive = isActive
+        price = newPrice,
+        priceHistory = (ad.priceHistory ?: emptyList()) + newPrice
     )
 
     val newAds = db.ads.toMutableList().apply { set(adIndex, updatedAd) }
     db = db.copy(ads = newAds)
 
     saveDatabase()
-    println("Объявление с id $adId успешно архивировано.\n")
+    println("Объявление №$adId успешно изменено. Новая цена: ${newPrice.toInt()}\n")
 }

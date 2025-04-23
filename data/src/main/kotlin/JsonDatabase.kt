@@ -40,17 +40,4 @@ object JsonDatabase {
     fun getNextIdAd(): Int {
         return if (db.ads.isEmpty()) 1 else db.ads.maxOf { it.id } + 1
     }
-
-//    fun getAds(): List<Ad> {
-//        return db.ads.filter { it.isActive }
-//    }
-
-//    fun getVehiclesWithoutAds(): List<Vehicle> {
-//        val ownerAds = db.ads.map { it.vin }
-//        return db.vehicles.filter { it.vin !in ownerAds }
-//    }
-
-//    fun getOwners(): List<Owner> {
-//        return db.owners
-//    }
 }
