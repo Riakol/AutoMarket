@@ -6,6 +6,7 @@ import entity.AdEntity
 import entity.MotoType
 import entity.OwnerEntity
 import entity.VehicleEntity
+import mapper.*
 import models.Ad
 import models.CarType
 import models.Owner
@@ -416,16 +417,16 @@ class VehicleRepositoryImpl : VehicleRepository {
     }
 
     override fun searchOwnerById(id: Int): Owner {
-        return mapOwnerEntityToDomain(db.owners.filter { it.id == id}[0])
+        return mapOwnerEntityToDomain(db.owners.filter { it.id == id }[0])
     }
 
     override fun searchByVin(vin: String): models.Vehicle {
-        return mapVehicleEntityToDomain(db.vehicles.filter {it.vin == vin}[0])
+        return mapVehicleEntityToDomain(db.vehicles.filter { it.vin == vin }[0])
     }
 
     override fun getAds(): List<Ad> {
         return db.ads.filter { it.isActive }
-            .map {  mapAdEntityToDomain(it) }
+            .map { mapAdEntityToDomain(it) }
     }
 
     override fun getVehiclesWithoutAds(): List<Vehicle> {

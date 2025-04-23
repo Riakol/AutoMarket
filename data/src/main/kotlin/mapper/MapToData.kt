@@ -1,8 +1,10 @@
-package utils
+package mapper
 
 import entity.AdEntity
+import entity.MotoType
 import entity.VehicleEntity
 import models.Ad
+import models.CarType
 import models.Vehicle
 
 fun mapVehicleToData(vehicle: Vehicle) : VehicleEntity {
@@ -21,7 +23,7 @@ private fun mapMotoToData(motorcycle: Vehicle.Motorcycle) : VehicleEntity.Motorc
         motorcycle.year,
         motorcycle.color,
         motorcycle.mileage,
-        entity.MotoType.valueOf(motorcycle.motoType.name),
+        MotoType.valueOf(motorcycle.motoType.name),
     )
 }
 
@@ -33,7 +35,7 @@ private fun mapCarToData(car: Vehicle.Car) : VehicleEntity.CarEntity {
         car.year,
         car.color,
         car.mileage,
-        models.CarType.valueOf(car.carType.name),
+        CarType.valueOf(car.carType.name),
     )
 }
 
