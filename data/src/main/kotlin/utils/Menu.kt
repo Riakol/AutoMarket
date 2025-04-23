@@ -1,4 +1,7 @@
-package org.example.ui
+package utils
+
+import entity.VehicleEntity
+import kotlin.enums.enumEntries
 
 fun displayMenu(){
     println("Выберите действие:")
@@ -26,4 +29,29 @@ fun displaySearchCriteria(userInput: Int) {
         3 -> println("3. С определенным тоннажем")
     }
     println("4. Назад")
+}
+
+fun displayVehicleDetails(vehicle: VehicleEntity) {
+    when (vehicle) {
+        is VehicleEntity.CarEntity -> println("* Car Type: ${vehicle.carType}\n")
+        is VehicleEntity.MotorcycleEntity -> println("* Motorcycle Type: ${vehicle.motoType}\n")
+        is VehicleEntity.CommercialVehicleEntity -> println("* Load Capacity: ${vehicle.loadCapacity.toInt()}\n")
+    }
+}
+
+fun displaySellVehicleType(vehicle: VehicleEntity){
+    when(vehicle) {
+        is VehicleEntity.CarEntity -> println("Продажа автомобиля:")
+        is VehicleEntity.MotorcycleEntity -> println("Продажа мотоцикла:")
+        is VehicleEntity.CommercialVehicleEntity -> println("Продажа коммерческого транспорта:")
+    }
+}
+
+inline fun <reified T : Enum<T>> displayVehicleType() {
+    val vehicleTypes = enumEntries<T>()
+
+    println("Выберите тип транспорта по номеру:")
+    vehicleTypes.forEachIndexed { index, type ->
+        println("${index + 1}. $type")
+    }
 }

@@ -1,167 +1,194 @@
 package com.automarket.data.repository
 
-import com.automarket.data.JsonDatabase
-import com.automarket.data.JsonDatabase.db
-import com.automarket.data.JsonDatabase.saveDatabase
+import JsonDatabase
+import JsonDatabase.db
 import entity.*
-import entity.CarType
-import entity.MotoType
-import models.*
+import models.Ad
+import models.Owner
+import models.Vehicle
+import org.example.consoleutils.readDoubleInput
+import org.example.consoleutils.readIntInput
+import org.example.consoleutils.readStringInput
 import repository.VehicleRepository
+import utils.*
 import java.time.LocalDate
 
 
 class VehicleRepositoryImpl : VehicleRepository {
     override fun addAd() {
         val getOwners = showOwners()
+        val showVehicles = getVehiclesWithoutAds()
+        var ownerInfo = mapOwnerEntityToDomain(OwnerEntity(0, "", "", ""))
+        var ownerVin: String = ""
+        var ownerPrice: Double = 0.0
 
         while (true) {
             println("Выберите владельца по id:\n")
-            for (owner in getOwners) {
-                println("${owner.id}. ${owner.name}")
+
+            for (owner in getOwners) println("${owner.id}. ${owner.name}")
+            val ownerInput = readln().toIntOrNull()
+
+            val selectedOwner = getOwners.find { ownerInput != null && it.id == ownerInput }
+            if (selectedOwner == null) {
+                println("Владелец с id $ownerInput не найден. Попробуйте снова.\n")
+                continue
             }
-            val userId = readln().toInt()
-            val currentOwner = getOwners.find { it.id == userId }
-            val ownerVehiclesWithoutAds = getVehiclesWithoutAds()
-
-            if (ownerVehiclesWithoutAds.isEmpty()) {
-                if (currentOwner != null) {
-                    println("Для владельца ${currentOwner.name} нет транспортных средств без объявлений\n")
-                    continue
-                }
-            }
-
-            println("Выберите ТС по номеру:\n")
-
-            for ((index, vehicle) in ownerVehiclesWithoutAds.withIndex()) {
-                print("${index + 1}.\n * ${vehicle.brand} ${vehicle.model}\n * Year: ${vehicle.year}\n * Color: ${vehicle.color}\n * Mileage: ${vehicle.mileage}\n")
-
-                when (vehicle) {
-                    is CarEntity -> println(" * CarType: ${vehicle.carType}")
-                    is MotorcycleEntity -> println(" * MotoType: ${vehicle.motoType}")
-                    is CommercialVehicleEntity -> println(" * Capacity: ${vehicle.capacity}")
-                }
-            }
-
-            val userSelectedVehicle = readln().toInt()
-            val ownerVin = ownerVehiclesWithoutAds[userSelectedVehicle - 1].vin
-
-
-            println("Введите цену:")
-            val price = readln().toInt()
-
-            postAd(
-                AdEntity(
-                    JsonDatabase.getMaxIndexAd(), userId, ownerVin, price, LocalDate.now().toString()
-                )
-            )
+            ownerInfo =  selectedOwner
             break
         }
+
+        if (showVehicles.isEmpty()) {
+            println("Для владельца ${ownerInfo.name} нет транспортных средств без объявления.\n")
+            return
+        }
+
+        while (true) {
+            println("Выберите ТС по номеру:")
+
+            for ((index, vehicle) in showVehicles.withIndex()) {
+                val mappingVehicleToData = mapVehicleToData(vehicle)
+                print("${index + 1}. ")
+                displaySellVehicleType(mappingVehicleToData)
+                println("* ${vehicle.make} ${vehicle.model}")
+                println("* Year: ${vehicle.year}")
+                println("* Color: ${vehicle.color}")
+                println("* Mileage: ${vehicle.mileage}")
+                displayVehicleDetails(mappingVehicleToData)
+            }
+
+            val userInput = readln().toIntOrNull()
+            if (userInput !in 1..showVehicles.size) {
+                println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${showVehicles.size}.")
+                continue
+            }
+            if (userInput != null) {
+                ownerVin = showVehicles[userInput - 1].vin
+            }
+            break
+        }
+
+        while (true) {
+            val userPriceInput = readDoubleInput("Введите цену")
+            ownerPrice = userPriceInput
+            break
+        }
+
+        val currentDate = LocalDate.now().toString()
+
+        service.addAd(
+            AdEntity(
+                JsonDatabase.getNextIdAd(),
+                ownerId = ownerInfo.id,
+                vin = ownerVin,
+                price = ownerPrice,
+                date = currentDate,
+            )
+        )
+        return
     }
 
     override fun addOwner() {
-        println("Введите имя:")
-        val userName = readln()
-        println("Введите телефон:")
-        val userPhone = readln()
-        println("Введите email:")
-        val userMail = readln()
+        val name = readStringInput("Введите имя владельца")
+        val phone = readStringInput("Введите номер телефона владельца")
+        val email = readStringInput("Введите электронную почту владельца")
 
-        val ownerEntity = OwnerEntity(
-            JsonDatabase.getNextOwnerId(), userName, userPhone, userMail
+        service.addOwner(
+            OwnerEntity(
+                id = JsonDatabase.getNextIdOwner(),
+                name = name,
+                phone = phone,
+                email = email
+            )
         )
-
-        val newOwners = db.ownerEntities.toMutableList().apply { add(ownerEntity) }
-        db = db.copy(ownerEntities = newOwners)
-        saveDatabase()
+        println("\n$name успешно добавлен.\n")
     }
 
+
     override fun addVehicle() {
-        println("1.Добавить автомобиль")
-        println("2.Добавить мотоцикл")
-        println("3.Добавить коммерческий транспорт")
-        val userChoice = readln().toInt()
-        when (userChoice) {
-            1 -> {
-                println("Введите vin:")
-                val userVin = readln()
-                println("Введите бренд:")
-                val userBrand = readln()
-                println("Введите модель:")
-                val userModel = readln()
-                println("Введите год:")
-                val userYear = readln().toInt()
-                println("Ввдите цвет:")
-                val userColor = readln()
-                println("Введите пробег:")
-                val userMileage = readln().toInt()
-                println("Введите тип автомобиля:")
-                for (ct in CarType.entries) {
-                    println("${ct.ordinal + 1}. $ct")
-                }
-                val userCarType = readln().toInt()
-                val userCarEntity = CarEntity(
-                    userVin,
-                    userBrand,
-                    userModel,
-                    userYear,
-                    userColor,
-                    userMileage,
-                    CarType.entries[userCarType - 1]
-                )
-                saveVehicle(userCarEntity)
+        displayVehicleTypeMenu()
 
+        while (true) {
+            val choiceTV = readln().toInt()
+
+            if (choiceTV !in 1..3) {
+                println("\nНекорректный выбор. Пожалуйста, выберите число от 1 до 3.")
+                continue
             }
 
-            2 -> {
-                println("Введите vin:")
-                val userVin = readln()
-                println("Введите бренд:")
-                val userBrand = readln()
-                println("Введите модель:")
-                val userModel = readln()
-                println("Введите год:")
-                val userYear = readln().toInt()
-                println("Ввдите цвет:")
-                val userColor = readln()
-                println("Введите пробег:")
-                val userMileage = readln().toInt()
-                println("Введите тип мотоцикла:")
-                for (mt in MotoType.entries) {
-                    println("${mt.ordinal + 1}. $mt")
-                }
-                val userMotoType = readln().toInt()
-                val userMoto = MotorcycleEntity(
-                    userVin,
-                    userBrand,
-                    userModel,
-                    userYear,
-                    userColor,
-                    userMileage,
-                    MotoType.entries[userMotoType - 1]
-                )
-                saveVehicle(userMoto)
-            }
+            val vin = readStringInput("Введите VIN")
+            val make = readStringInput("Введите марку")
+            val model = readStringInput("Введите модель")
+            val year = readIntInput("Введите год выпуска")
+            val color = readStringInput("Введите цвет")
+            val mileage = readIntInput("Введите пробег")
 
-            3 -> {
-                println("Введите vin:")
-                val userVin = readln()
-                println("Введите бренд:")
-                val userBrand = readln()
-                println("Введите модель:")
-                val userModel = readln()
-                println("Введите год:")
-                val userYear = readln().toInt()
-                println("Ввдите цвет:")
-                val userColor = readln()
-                println("Введите пробег:")
-                val userMileage = readln().toInt()
-                println("Введите грузоподъемность:")
-                val userCapacity = readln().toInt()
-                val userCommercialVehicleEntity = CommercialVehicleEntity(
-                    userVin, userBrand, userModel, userYear, userColor, userMileage, userCapacity
-                )
-                saveVehicle(userCommercialVehicleEntity)
+            when (choiceTV) {
+                1 -> {
+                    while (true) {
+                        displayVehicleType<CarType>()
+                        val carType = readln().toInt()
+
+                        if (carType !in 1..CarType.entries.size) {
+                            println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${CarType.entries.size}.")
+                            continue
+                        }
+                        service.addVehicle(
+                            VehicleEntity.CarEntity(
+                                vin = vin,
+                                make = make,
+                                model = model,
+                                year = year,
+                                color = color,
+                                mileage = mileage,
+                                carType = CarType.entries[carType - 1]
+                            )
+                        )
+                        println("\nАвтомобиль успешно добавлен.\n")
+                        return
+                    }
+                }
+                2 -> {
+                    while (true) {
+                        displayVehicleType<MotoType>()
+                        val motoType = readln().toInt()
+
+                        if (motoType !in 1..MotoType.entries.size) {
+                            println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${MotoType.entries.size}.")
+                            continue
+                        }
+                        service.addVehicle(
+                            VehicleEntity.MotorcycleEntity(
+                                vin = vin,
+                                make = make,
+                                model = model,
+                                year = year,
+                                color = color,
+                                mileage = mileage,
+                                motoType = MotoType.entries[motoType - 1]
+                            )
+                        )
+                        println("\nМотоцикл успешно добавлен.\n")
+                        return
+                    }
+                }
+                3 -> {
+                    while (true) {
+                        val loadCapacity = readIntInput("Введите грузоподъемность")
+                        service.addVehicle(
+                            VehicleEntity.CommercialVehicleEntity(
+                                vin = vin,
+                                make = make,
+                                model = model,
+                                year = year,
+                                color = color,
+                                mileage = mileage,
+                                loadCapacity = loadCapacity.toDouble()
+                            )
+                        )
+                        println("\nКоммерческий транспорт успешно добавлен.\n")
+                        return
+                    }
+                }
             }
         }
     }
@@ -173,375 +200,149 @@ class VehicleRepositoryImpl : VehicleRepository {
             println("Нет объявлений.")
             return
         }
-        println("Выберите номер объявления: \n")
-        for ((index, ad) in ads.withIndex()) {
-            val vinTV = searchByVin(ad.vin)
-            val ownerID = searchOwnerById(ad.ownerId)
-            println("Объявления №${ad.id} от ${ad.date}")
-            println("Продавец ${ownerID.name}")
-            println("Бренд ${vinTV.brand} ${vinTV.model}")
-            println("Год ${vinTV.year}")
-            println("Цвет ${vinTV.color}")
-            println("Пробег ${vinTV.mileage}")
-            when (vinTV) {
-                is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
 
-            }
+        println("Выберите номер объявления:\n")
+
+        for (ad in ads) {
+            displayAd(mapAdToData(ad))
         }
-        val userAdInput = readln().toIntOrNull()
-        println("Укажите причину снятия объявления: ")
 
-        val userCancelAd = readln()
-        if (userAdInput != null) {
-            removeAd(
-                userAdInput, userCancelAd, false
-            )
+        var userInput = readln()
+
+        while (true) {
+            when {
+                db.ads.none { it.id == userInput.toInt() && it.isActive } -> {
+                    println("Объявления с id $userInput не существует. Пожалуйста, выберите корректный id")
+                    userInput = readln()
+                    if (userInput.all { it.isDigit() }) continue else break
+                }
+                else -> {
+                    println("Укажите причину снятия объявления:")
+                    val reason = readln()
+                    service.archiveAd(userInput.toInt(), reason, false)
+                    return
+                }
+            }
         }
     }
 
     override fun searchAds() {
-        while (true) {
-            println("Выберите тип ТС:")
-            println("1. Автомобиль")
-            println("2. Мотоцикл")
-            println("3. Коммерческий транспорт")
-            println("4. Назад")
+        displayVehicleTypeMenu()
+        println("4. Общий поиск")
+        println("5. Вернуться назад")
 
-            val userVehicleMenu = readln().toInt()
+        var userInput: Int? = null
+        do {
+            userInput = readln().toIntOrNull() ?: continue
+            if (userInput !in 1..5) {
+                println("Некорректный выбор. Пожалуйста, выберите число от 1 до 5.")
+            }
+        } while (userInput !in 1..5)
 
-
-
-            when (userVehicleMenu) {
-                1 -> {
-                    println("Выберите критерии поиска по номеру:")
-                    println("1. С определенной стоимостью и пробегом")
-                    println("2. С определенным цветом")
-                    println("3. С определнным типом")
-                    val userCriteriaInput = readln().toInt()
-
-                    when (userCriteriaInput) {
-                        1 -> {
-                            println("Введите стоимость автомобиля:")
-                            val userPrice = readln().toInt()
-                            println("Введите пробег:")
-                            val userMileage = readln().toInt()
-                            val userCarList = findVehicleByPriceAndMileage(
-                                userPrice, userMileage, userVehicleMenu
-                            )
-                            for ((index, ad) in userCarList.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-
-                                }
-                            }
-                        }
-
-                        2 -> {
-                            println("Введите цвет:")
-                            val userColor = readln()
-                            val userGetList = findVehicleByColor(
-                                userColor, userVehicleMenu
-                            )
-
-                            for ((index, ad) in userGetList.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-
-                                }
-                            }
-                        }
-
-                        3 -> {
-                            println("Выберите тип по номеру: \n")
-
-                            for (type in CarType.entries) {
-                                println("${type.ordinal + 1}. ${type}")
-                            }
-                            val userType = readln().toInt()
-                            val userChoiceType = findByType(
-                                CarType.entries[userType - 1].name
-                            )
-
-                            for ((index, ad) in userChoiceType.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-                                }
-                            }
-                        }
-                    }
+        when (userInput) {
+            1, 2, 3 -> {
+                displaySearchCriteria(userInput)
+                saveVehicleTypeSelection(userInput)
+            }
+            4 -> {
+                val ads = getAds()
+                for (ad in ads) {
+                    displayAd(mapAdToData(ad))
                 }
-
-                2 -> {
-                    println("Выберите критерии поиска по номеру:")
-                    println("1. С определенной стоимостью и пробегом")
-                    println("2. С определенным цветом")
-                    println("3. С определнным типом")
-                    val userCriteriaInput = readln().toInt()
-
-                    when (userCriteriaInput) {
-                        1 -> {
-                            println("Введите стоимость мотоцикла:")
-                            val userPrice = readln().toInt()
-                            println("Введите пробег:")
-                            val userMileage = readln().toInt()
-                            val userMotoList = findVehicleByPriceAndMileage(
-                                userPrice, userMileage, userVehicleMenu
-                            )
-                            for ((index, ad) in userMotoList.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-
-                                }
-                            }
-                        }
-
-                        2 -> {
-                            println("Введите цвет:")
-                            val userColor = readln()
-                            val userGetList = findVehicleByColor(
-                                userColor, userVehicleMenu
-                            )
-
-                            for ((index, ad) in userGetList.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-
-                                }
-                            }
-                        }
-
-                        3 -> {
-                            println("Выберите тип по номеру: \n")
-
-                            for (type in MotoType.entries) {
-                                println("${type.ordinal + 1}. ${type}")
-                            }
-                            val userType = readln().toInt()
-                            val userChoiceType = findByType(
-                                MotoType.entries[userType - 1].name
-                            )
-
-                            for ((index, ad) in userChoiceType.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-                                }
-                            }
-                        }
-                    }
-                }
-
-                3 -> {
-                    println("Выберите критерии поиска по номеру:")
-                    println("1. С определенной стоимостью и пробегом")
-                    println("2. С определенным цветом")
-                    println("3. С определённым тоннажем")
-                    val userCriteriaInput = readln().toInt()
-
-                    when (userCriteriaInput) {
-                        1 -> {
-                            println("Введите стоимость коммерческого транспорта:")
-                            val userPrice = readln().toInt()
-                            println("Введите пробег:")
-                            val userMileage = readln().toInt()
-                            val userCarList = findVehicleByPriceAndMileage(
-                                userPrice, userMileage, userVehicleMenu
-                            )
-                            for ((index, ad) in userCarList.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-
-                                }
-                            }
-                        }
-
-                        2 -> {
-                            println("Введите цвет:")
-                            val userColor = readln()
-                            val userGetList = findVehicleByColor(
-                                userColor, userVehicleMenu
-                            )
-
-                            for ((index, ad) in userGetList.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-
-                                }
-                            }
-                        }
-
-                        3 -> {
-                            println("Введите грузоподъёмность:\n")
-
-                            val userCapacity = readln().toInt()
-                            val userGetListByCapacity = findByCapacity(userCapacity)
-
-                            for ((index, ad) in userGetListByCapacity.withIndex()) {
-                                val vinTV = searchByVin(ad.vin)
-                                val ownerID = searchOwnerById(ad.ownerId)
-                                println("Объявления №${ad.id} от ${ad.date}")
-                                println("Продавец ${ownerID.name}")
-                                println("Бренд ${vinTV.brand} ${vinTV.model}")
-                                println("Год ${vinTV.year}")
-                                println("Цвет ${vinTV.color}")
-                                println("Пробег ${vinTV.mileage}")
-                                when (vinTV) {
-                                    is CarEntity -> println("Тип автомобиля: ${vinTV.carType} \n")
-                                    is MotorcycleEntity -> println("Тип мотоцикла: ${vinTV.motoType} \n")
-                                    is CommercialVehicleEntity -> println("Грузоподъемность: ${vinTV.capacity} \n")
-                                }
-                            }
-                        }
-                    }
-                }
-
-                4 -> {
-                    break
-                }
-
+            }
+            5 -> {
+                return
             }
         }
     }
 
-    private fun saveVehicle(vehicleEntity: VehicleEntity) {
-        val newVehicle = db.vehicleEntities.toMutableList() .apply { add(vehicleEntity) }
-        db = db.copy(vehicleEntities = newVehicle)
-        saveDatabase()
-    }
-
-    private fun postAd(adEntity: AdEntity) {
-        if (db.adEntities.any { it.id == adEntity.id }) {
-            println("Объявление с id ${adEntity.id} уже существует!")
-            return
-        }
-
-        val newAds = db.adEntities.toMutableList().apply { add(adEntity) }
-        db = db.copy(adEntities = newAds)
-        saveDatabase()
-        println("\nОбъявление успешно добавлено.\n")
-    }
-
-    private fun removeAd(adId: Int, cancellationReason: String, isActive: Boolean) {
-        val adIndex = db.adEntities.indexOfFirst { it.id == adId }
-        if (adIndex == -1) {
-            println("Объявление с id $adId не существует!")
-            return
-        }
-
-        val ad = db.adEntities[adIndex]
-        val updatedAd = ad.copy(
-            reasonForCancellation = cancellationReason,
-            isActive = isActive
-        )
-
-        val newAds = db.adEntities.toMutableList().apply { set(adIndex, updatedAd) }
-        db = db.copy(adEntities = newAds)
-
-        saveDatabase()
-        println("Объявление с id $adId успешно архивировано.\n")
-    }
 
     override fun findByCapacity(tvCapacity: Int): List<Ad> {
-        return db.adEntities.filter { ad ->
-            db.vehicleEntities.any { vehicle ->
-                vehicle.vin == ad.vin &&
-                        when(vehicle) {
-                            is CommercialVehicleEntity -> vehicle.capacity == tvCapacity
-                            else -> false
+        return db.ads.filter { ad ->
+            db.vehicles.find { tv -> tv.vin == ad.vin }?.let { vehicle ->
+                vehicle is VehicleEntity.CommercialVehicleEntity && vehicle.loadCapacity.toInt() == tvCapacity
+            } ?: false
+        }.map { adEntity -> mapAdEntityToDomain(adEntity) }
+    }
+
+    private fun findVehiclesByCostAndMileage(numVehicleType: Int) {
+        val userPrice = readDoubleInput("Введите стоимость ТС")
+        val userMileage = readIntInput("Введите пробег")
+        val result = findVehicleByPriceAndMileage(userPrice.toInt(), userMileage, numVehicleType)
+
+        if (result.isEmpty()) {
+            println("Объявлений нет\n")
+            return
+        }
+
+        for (tv in result) {
+            displayAd(mapAdToData(tv))
+        }
+    }
+
+    private fun findVehiclesByColor(num: Int) {
+        val userColor = readStringInput("Введите цвет\n")
+        val vehicleColor = findVehicleByColor(userColor, num)
+
+        if (vehicleColor.isEmpty()) {
+            println("Объявлений нет\n")
+            return
+        }
+
+        for (tv in vehicleColor) {
+            displayAd(mapAdToData(tv))
+        }
+    }
+
+    private fun saveVehicleTypeSelection(userInput: Int) {
+        while (true) {
+            when (readln().toInt()) {
+                1 -> {
+                    findVehiclesByCostAndMileage(userInput)
+                    break
+                }
+                2 -> {
+                    findVehiclesByColor(userInput)
+                    break
+                }
+                3 -> {
+                    when(userInput) {
+                        1 -> {
+                            displayVehicleType<CarType>()
+                            findVehiclesByType<CarType>()
+                            break
                         }
+                        2 -> {
+                            displayVehicleType<MotoType>()
+                            findVehiclesByType<MotoType>()
+                            break
+                        }
+                        3 -> {
+                            val userLoadCapacity = readDoubleInput("\nВведите грузоподъемность")
+                            val vehicleType =
+                                findByCapacity(userLoadCapacity.toInt())
+
+                            if (vehicleType.isEmpty()) println("Объявлений нет")
+
+                            for (tv in vehicleType) {
+                                displayAd(mapAdToData(tv))
+                            }
+                            break
+                        }
+                    }
+                }
+                4 -> break
             }
         }
-            .map { adEntity -> mapAdEntityToDomain(adEntity) }
     }
 
     override fun findByType(vehicleType: String): List<Ad> {
-        return db.adEntities.filter { ad ->
-            db.vehicleEntities.any { vehicle ->
+        return db.ads.filter { ad ->
+            db.vehicles.any { vehicle ->
                 vehicle.vin == ad.vin &&
                         when(vehicle) {
-                            is CarEntity -> vehicle.carType.name == vehicleType
-                            is MotorcycleEntity -> vehicle.motoType.name == vehicleType
+                            is VehicleEntity.CarEntity -> vehicle.carType.name == vehicleType
+                            is VehicleEntity.MotorcycleEntity -> vehicle.motoType.name == vehicleType
                             else -> false
                         }
             }
@@ -550,13 +351,13 @@ class VehicleRepositoryImpl : VehicleRepository {
     }
 
     override fun findVehicleByColor(color: String, typeVehicle: Int): List<Ad> {
-        return db.adEntities.filter { ad ->
-            db.vehicleEntities.any { vehicle ->
+        return db.ads.filter { ad ->
+            db.vehicles.any { vehicle ->
                 vehicle.color == color &&
                         ad.vin == vehicle.vin && when(typeVehicle) {
-                    1 -> vehicle is CarEntity
-                    2 -> vehicle is MotorcycleEntity
-                    else -> vehicle is CommercialVehicleEntity
+                    1 -> vehicle is VehicleEntity.CarEntity
+                    2 -> vehicle is VehicleEntity.MotorcycleEntity
+                    else -> vehicle is VehicleEntity.CommercialVehicleEntity
                 }
             }
         }
@@ -564,14 +365,14 @@ class VehicleRepositoryImpl : VehicleRepository {
     }
 
     override fun findVehicleByPriceAndMileage(price: Int, mileage: Int, typeVehicle: Int): List<Ad> {
-        return db.adEntities.filter { ad ->
-            ad.price == price && db.vehicleEntities.any { vehicle ->
+        return db.ads.filter { ad ->
+            ad.price.toInt() == price && db.vehicles.any { vehicle ->
                 vehicle.vin == ad.vin &&
                         vehicle.mileage == mileage &&
                         when(typeVehicle) {
-                            1 -> vehicle is CarEntity
-                            2 -> vehicle is MotorcycleEntity
-                            else -> vehicle is CommercialVehicleEntity
+                            1 -> vehicle is VehicleEntity.CarEntity
+                            2 -> vehicle is VehicleEntity.MotorcycleEntity
+                            else -> vehicle is VehicleEntity.CommercialVehicleEntity
                         }
             }
         }
@@ -579,102 +380,69 @@ class VehicleRepositoryImpl : VehicleRepository {
     }
 
     override fun searchOwnerById(id: Int): Owner {
-        return mapOwnerEntityToDomain(db.ownerEntities.filter { owner -> owner.id == id }[0])
+        return mapOwnerEntityToDomain(db.owners.filter { it.id == id}[0])
     }
 
     override fun searchByVin(vin: String): models.Vehicle {
-        return mapVehicleEntityToDomain(db.vehicleEntities.filter { it.vin == vin }[0])
+        return mapVehicleEntityToDomain(db.vehicles.filter {it.vin == vin}[0])
     }
 
     override fun getAds(): List<Ad> {
-        return db.adEntities.filter { it.isActive }
+        return db.ads.filter { it.isActive }
             .map {  mapAdEntityToDomain(it) }
     }
 
     override fun getVehiclesWithoutAds(): List<Vehicle> {
-        val ownerAds = db.adEntities.map { it.vin } //проходимся по обьяв и находим все вин авто
-        return db.vehicleEntities.filter { it.vin !in ownerAds }
-            .map { mapVehicleEntityToDomain(it) } // у нас есть обьяв где есть vin автомобилей(мы просим вернуть все авто которых нет в обьяв)
+        val ownerAds = db.ads.map { it.vin }
+        return db.vehicles.filter { it.vin !in ownerAds }
+            .map { mapVehicleEntityToDomain(it) }
     }
 
     override fun showOwners(): List<Owner> {
-        return db.ownerEntities
+        return db.owners
             .map { mapOwnerEntityToDomain(it) }
     }
 
-    private fun mapAdEntityToDomain(adEntity: AdEntity) : Ad {
-        return Ad(
-            adEntity.id,
-            adEntity.ownerId,
-            adEntity.vin,
-            adEntity.price,
-            adEntity.date
-        )
+    private fun displayAd(ad: AdEntity) {
+        val vinTv = searchByVin(ad.vin)
+        val ownerName = searchOwnerById(ad.ownerId)
+        val priceHistoryString = ad.priceHistory
+            ?.takeIf { it.size > 1 }
+            ?.dropLast(1)
+            ?.joinToString(", ") { it.toInt().toString() }
+            ?: ""
+
+        println("Объявление №${ad.id} от ${ad.date}")
+        displaySellVehicleType(mapVehicleToData(vinTv))
+        println("Seller: ${ownerName.name}, ${ownerName.phone}")
+        println("* ${vinTv.make} ${vinTv.model}")
+        println("* Year: ${vinTv.year}")
+        println("* Price: ${ad.price.toInt()}")
+        if (priceHistoryString.isNotEmpty()) println("* Price change history: $priceHistoryString")
+        println("* Color: ${vinTv.color}")
+        println("* Mileage: ${vinTv.mileage}")
+        displayVehicleDetails(mapVehicleToData(vinTv))
     }
 
-//    private fun mapListAdEntityToDomain(adEntity: AdEntity) : List<Ad> {
-//        return listOf(
-//            Ad(
-//                adEntity.id,
-//                adEntity.ownerId,
-//                adEntity.vin,
-//                adEntity.price,
-//                adEntity.date
-//            )
-//        )
-//    }
+    private inline fun <reified T : Enum<T>> findVehiclesByType() {
+        val userVehicleType = readln().toInt()
+        val vehicleTypes = enumValues<T>()
 
-    private fun mapOwnerEntityToDomain(ownerEntity: OwnerEntity) : Owner {
-        return Owner (
-            ownerEntity.id,
-            ownerEntity.name,
-            ownerEntity.email,
-            ownerEntity.phone
-        )
-    }
+        while (true) {
+            if (userVehicleType !in 1..vehicleTypes.size) {
+                println("Некорректный выбор. Пожалуйста, выберите число от 1 до ${vehicleTypes.size}.")
+                continue
+            }
 
-    private fun mapVehicleEntityToDomain(vehicleEntity: VehicleEntity) : Vehicle {
-        return when(vehicleEntity) {
-            is MotorcycleEntity -> mapMotoEntityToDomain(vehicleEntity)
-            is CarEntity -> mapCarEntityToDomain(vehicleEntity)
-            is CommercialVehicleEntity -> mapCommercialCarToDomain(vehicleEntity)
-            else -> throw IllegalArgumentException("Неизвестный тип транспортного средства")
+            val vehicleType = findByType(vehicleTypes[userVehicleType - 1].name)
+
+            if (vehicleType.isEmpty()) {
+                println("Объявлений нет")
+                break
+            }
+
+            vehicleType.forEach { displayAd(mapAdToData(it)) }
+            break
         }
-    }
-
-    private fun mapMotoEntityToDomain(motorcycleEntity: MotorcycleEntity) : Motorcycle {
-       return Motorcycle (
-            motorcycleEntity.vin,
-            motorcycleEntity.brand,
-            motorcycleEntity.model,
-            motorcycleEntity.year,
-            motorcycleEntity.color,
-            motorcycleEntity.mileage,
-           models.MotoType.valueOf(motorcycleEntity.motoType.name),
-        )
-    }
-
-    private fun mapCarEntityToDomain(carEntity: CarEntity) : Car {
-        return Car (
-            carEntity.vin,
-            carEntity.brand,
-            carEntity.model,
-            carEntity.year,
-            carEntity.color,
-            carEntity.mileage,
-            models.CarType.valueOf(carEntity.carType.name),
-        )
-    }
-
-    private fun mapCommercialCarToDomain(commercialVehicleEntity: CommercialVehicleEntity) : CommercialVehicle {
-        return CommercialVehicle (
-            commercialVehicleEntity.vin,
-            commercialVehicleEntity.brand,
-            commercialVehicleEntity.model,
-            commercialVehicleEntity.year,
-            commercialVehicleEntity.color,
-            commercialVehicleEntity.mileage,
-            commercialVehicleEntity.capacity
-        )
     }
 }

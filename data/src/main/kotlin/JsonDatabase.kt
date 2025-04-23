@@ -1,8 +1,3 @@
-package com.automarket.data
-
-import entity.CarEntity
-import entity.CommercialVehicleEntity
-import entity.MotorcycleEntity
 import entity.VehicleEntity
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -10,20 +5,19 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import java.io.File
 
-
 object JsonDatabase {
     private val dbFile = File("database.json")
 
-    private val module = SerializersModule {
+    private val vehicleSerializersModule = SerializersModule {
         polymorphic(VehicleEntity::class) {
-            subclass(MotorcycleEntity::class)
-            subclass(CarEntity::class)
-            subclass(CommercialVehicleEntity::class)
+            subclass(VehicleEntity.MotorcycleEntity::class)
+            subclass(VehicleEntity.CarEntity::class)
+            subclass(VehicleEntity.CommercialVehicleEntity::class)
         }
     }
 
     private val json = Json {
-        serializersModule = module
+        serializersModule = vehicleSerializersModule
         prettyPrint = true
         classDiscriminator = "type"
         ignoreUnknownKeys = true
@@ -39,14 +33,24 @@ object JsonDatabase {
         dbFile.writeText(json.encodeToString(db))
     }
 
-    fun getNextOwnerId(): Int {
-        return if (db.ownerEntities.isEmpty()) 1 else db.ownerEntities.maxOf { it.id } + 1 // максоф находит максимальный айди и прибавляем на 1
+    fun getNextIdOwner(): Int {
+        return if (db.owners.isEmpty()) 1 else db.owners.maxOf { it.id } + 1
     }
 
-    fun getMaxIndexAd(): Int {
-        return if (db.adEntities.isEmpty()) 1 else db.adEntities.maxOf { it.id } + 1 // максоф находит максимальный айди и прибавляем на 1
+    fun getNextIdAd(): Int {
+        return if (db.ads.isEmpty()) 1 else db.ads.maxOf { it.id } + 1
     }
+
+//    fun getAds(): List<Ad> {
+//        return db.ads.filter { it.isActive }
+//    }
+
+//    fun getVehiclesWithoutAds(): List<Vehicle> {
+//        val ownerAds = db.ads.map { it.vin }
+//        return db.vehicles.filter { it.vin !in ownerAds }
+//    }
+
+//    fun getOwners(): List<Owner> {
+//        return db.owners
+//    }
 }
-
-
-

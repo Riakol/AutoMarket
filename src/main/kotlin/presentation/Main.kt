@@ -1,7 +1,7 @@
-package org.example
+package org.example.presentation
 
 import org.example.service.*
-import org.example.ui.*
+import utils.displayMenu
 
 fun main() {
 
